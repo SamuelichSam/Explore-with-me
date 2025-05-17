@@ -1,7 +1,9 @@
 package ru.practicum.projection;
 
 public interface StatProjection {
-        String getApp();
-        String getUri();
-        Long getHits();
+    String getApp();
+
+    String getUri();
+
+    Long getHits();
 }
