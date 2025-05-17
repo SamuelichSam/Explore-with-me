@@ -7,6 +7,7 @@ import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.HitDto;
 import ru.practicum.StatDto;
 import ru.practicum.mapper.StatMapper;
+import ru.practicum.projection.StatProjection;
 import ru.practicum.repo.StatRepository;
 
 import java.time.LocalDateTime;
@@ -27,30 +28,26 @@ public class StatsServiceImpl implements StatsService {
 
     @Override
     public List<StatDto> findStats(LocalDateTime start, LocalDateTime end, List<String> uris, Boolean unique) {
-        List<Object[]> statsData;
+        List<StatProjection> projections;
         if (uris == null || uris.isEmpty()) {
             if (unique) {
                 log.info("Получение статистики - uris empty, unique");
-                statsData = statRepository.findUniqueStatsByPeriod(start, end);
+                projections = statRepository.findUniqueStatsByPeriod(start, end);
             } else {
                 log.info("Получение статистики - uris empty, not unique");
-                statsData = statRepository.findStatsByPeriod(start, end);
+                projections = statRepository.findStatsByPeriod(start, end);
             }
         } else {
             if (unique) {
                 log.info("Получение статистики - uris not empty, unique");
-                statsData = statRepository.findUniqueStatsByPeriodAndUris(start, end, uris);
+                projections = statRepository.findUniqueStatsByPeriodAndUris(start, end, uris);
             } else {
                 log.info("Получение статистики - uris not empty, not unique");
-                statsData = statRepository.findStatsByPeriodAndUris(start, end, uris);
+                projections = statRepository.findStatsByPeriodAndUris(start, end, uris);
             }
         }
-        return statsData.stream()
-                .map(row -> new StatDto(
-                        (String) row[0],
-                        (String) row[1],
-                        (Long) row[2]
-                ))
+        return projections.stream()
+                .map(p -> new StatDto(p.getApp(), p.getUri(), p.getHits()))
                 .toList();
     }
 }
