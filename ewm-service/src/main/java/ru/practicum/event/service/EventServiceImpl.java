@@ -1,6 +1,5 @@
 package ru.practicum.event.service;
 
-import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
@@ -38,8 +37,9 @@ import java.util.List;
 
 @Slf4j
 @Service
+@Transactional
 @RequiredArgsConstructor
-public class EventServiceImpl implements EventService {
+public class EventServiceImpl implements EventServiceAdmin, EventServicePrivate, EventServicePublic {
     private final EventRepository eventRepository;
     private final UserRepository userRepository;
     private final CategoryRepository categoryRepository;
@@ -89,7 +89,6 @@ public class EventServiceImpl implements EventService {
         return eventMapper.toFullDto(event);
     }
 
-    @Transactional
     @Override
     public EventFullDto updateEventPrivate(Long userId, Long eventId, UpdateEventUserRequest dto) {
         log.info("Обновление события с id - {} добавленного пользователем с id - {}", eventId, userId);
@@ -97,7 +96,7 @@ public class EventServiceImpl implements EventService {
                 .orElseThrow(() -> new NotFoundException("Событие с id " + eventId + " не найдено"));
         EventCheck.stateValidation(event.getState());
         EventCheck.dateCheck(event.getEventDate());
-        EventUpdate.updateEventRequest(event, dto, locationRepository);
+        EventUpdate.updateEventRequest(event, dto);
         if (dto.category() != null) {
             Category category = categoryRepository.findById(dto.category())
                     .orElseThrow(() -> new NotFoundException("Категория с id " + dto.category() + " не найдена"));
@@ -128,7 +127,6 @@ public class EventServiceImpl implements EventService {
                 .toList();
     }
 
-    @Transactional
     @Override
     public EventRequestStatusUpdateResult updateEventRequestsPrivate(Long userId, Long eventId,
                                                                      EventRequestStatusUpdateRequest dto) {
@@ -163,19 +161,17 @@ public class EventServiceImpl implements EventService {
     }
 
     @Override
-    public List<EventFullDto> findEventsAdmin(List<Long> users, List<String> states, List<Long> categories,
-                                              LocalDateTime rangeStart, LocalDateTime rangeEnd, Integer from,
-                                              Integer size) {
+    public List<EventFullDto> findEventsAdmin(EventAdminRequestParams params) {
         log.info("Поиск событий");
-        Specification<Event> spec = EventSpec.specAdmin(users, states, categories, rangeStart, rangeEnd);
-        Pageable pageable = PageRequest.of(from / size, size);
+        Specification<Event> spec = EventSpec.specAdmin(params.users(), params.states(), params.categories(),
+                params.rangeStart(), params.rangeEnd());
+        Pageable pageable = PageRequest.of(params.from() / params.size(), params.size());
         List<Event> events = eventRepository.findAll(spec, pageable).getContent();
         return events.stream()
                 .map(eventMapper::toFullDto)
                 .toList();
     }
 
-    @Transactional
     @Override
     public EventFullDto updateEventAdmin(Long eventId, UpdateEventAdminRequest dto) {
         log.info("Обновление события с id - {} и его статуса", eventId);
@@ -201,7 +197,7 @@ public class EventServiceImpl implements EventService {
                 }
             }
         }
-        EventUpdate.updateEventRequest(event, dto, locationRepository);
+        EventUpdate.updateEventRequestAdmin(event, dto, locationRepository);
         if (dto.category() != null) {
             Category category = categoryRepository.findById(dto.category())
                     .orElseThrow(() -> new NotFoundException("Категория с id " + dto.category() + " не найдена"));
@@ -212,14 +208,12 @@ public class EventServiceImpl implements EventService {
     }
 
     @Override
-    public List<EventShortDto> findEventsPublic(String text, List<Long> categories, Boolean paid,
-                                                LocalDateTime rangeStart, LocalDateTime rangeEnd,
-                                                Boolean onlyAvailable, String sort, Integer from,
-                                                Integer size, HttpServletRequest request) {
+    public List<EventShortDto> findEventsPublic(EventPublicRequestParams params, String clientIp, String endpoint) {
         log.info("Получение событий с возможностью фильтрации");
-        Specification<Event> spec = EventSpec.specPublic(text, categories, paid, rangeStart, rangeEnd, onlyAvailable);
-        EventCheck.datePeriodCheck(rangeStart, rangeEnd);
-        EventSort eventSort = sort != null ? EventSort.valueOf(sort.toUpperCase()) : null;
+        Specification<Event> spec = EventSpec.specPublic(params.text(), params.categories(), params.paid(),
+                params.rangeStart(), params.rangeEnd(), params.onlyAvailable());
+        EventCheck.datePeriodCheck(params.rangeStart(), params.rangeEnd());
+        EventSort eventSort = params.sort() != null ? EventSort.valueOf(params.sort().toUpperCase()) : null;
         Sort sorting = Sort.unsorted();
         if (eventSort != null) {
             if (eventSort == EventSort.EVENT_DATE) {
@@ -228,21 +222,21 @@ public class EventServiceImpl implements EventService {
                 sorting = Sort.by(Sort.Direction.DESC, "views");
             }
         }
-        Pageable pageable = PageRequest.of(from / size, size, sorting);
+        Pageable pageable = PageRequest.of(params.from() / params.size(), params.size(), sorting);
         List<Event> events = eventRepository.findAll(spec, pageable).getContent();
-        logHit(request);
+        logHit(clientIp, endpoint);
         return events.stream()
                 .map(eventMapper::toShortDto)
                 .toList();
     }
 
     @Override
-    public EventFullDto findEventByIdPublic(Long eventId, HttpServletRequest request) {
+    public EventFullDto findEventByIdPublic(Long eventId, String clientIp, String endpoint) {
         log.info("Получение подробной информации об опубликованном событии с id - {}", eventId);
         Event event = eventRepository.findByIdAndState(eventId, State.PUBLISHED)
                 .orElseThrow(() -> new NotFoundException("Событие с id " + eventId +
                         " не найдено"));
-        logHit(request);
+        logHit(clientIp, endpoint);
         List<StatDto> stats = statsClient.findStats(event.getPublishedOn(), LocalDateTime.now(),
                 List.of("/events/" + eventId), true);
         Long views = stats.isEmpty() ? 0L : stats.getFirst().hits();
@@ -250,12 +244,12 @@ public class EventServiceImpl implements EventService {
         return eventMapper.toFullDto(event);
     }
 
-    private void logHit(HttpServletRequest request) {
+    private void logHit(String clientIp, String endpoint) {
         log.info("Отправка информации о просмотре в сервис статистики");
         HitDto hitDto = new HitDto(
                 "explore-with-me",
-                request.getRequestURI(),
-                request.getRemoteAddr(),
+                endpoint,
+                clientIp,
                 LocalDateTime.now()
         );
         statsClient.createHit(hitDto);

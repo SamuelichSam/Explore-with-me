@@ -5,7 +5,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.event.dto.*;
-import ru.practicum.event.service.EventService;
+import ru.practicum.event.service.EventServiceAdmin;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -14,7 +14,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/admin/events")
 public class EventAdminController {
-    private final EventService eventService;
+    private final EventServiceAdmin eventService;
 
     @GetMapping
     public List<EventFullDto> findEventsAdmin(@RequestParam(required = false) List<Long> users,
@@ -26,8 +26,9 @@ public class EventAdminController {
                                               @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime rangeEnd,
                                               @RequestParam(defaultValue = "0") Integer from,
                                               @RequestParam(defaultValue = "10") Integer size) {
+        var params = EventAdminRequestParams.of(users, states, categories, rangeStart, rangeEnd, from, size);
 
-        return eventService.findEventsAdmin(users, states, categories, rangeStart, rangeEnd, from, size);
+        return eventService.findEventsAdmin(params);
     }
 
     @PatchMapping("/{eventId}")

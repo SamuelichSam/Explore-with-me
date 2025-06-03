@@ -16,6 +16,7 @@ import java.util.List;
 
 @Slf4j
 @Service
+@Transactional
 @RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
@@ -36,7 +37,6 @@ public class UserServiceImpl implements UserService {
                 .toList();
     }
 
-    @Transactional
     @Override
     public UserDto createUser(UserDto userDto) {
         log.info("Добавление нового пользователя");
@@ -47,7 +47,6 @@ public class UserServiceImpl implements UserService {
         return userMapper.toDto(user);
     }
 
-    @Transactional
     @Override
     public void deleteUser(Long id) {
         log.info("Удаление пользователя с id - {}", id);

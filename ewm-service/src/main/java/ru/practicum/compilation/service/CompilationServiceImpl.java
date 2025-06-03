@@ -22,6 +22,7 @@ import java.util.Optional;
 
 @Slf4j
 @Service
+@Transactional
 @RequiredArgsConstructor
 public class CompilationServiceImpl implements CompilationService {
     private final CompilationRepository compilationRepository;
@@ -46,7 +47,6 @@ public class CompilationServiceImpl implements CompilationService {
         return compilationMapper.toDto(compilation);
     }
 
-    @Transactional
     @Override
     public CompilationDto createCompilationAdmin(NewCompilationDto dto) {
         log.info("Добавление новой подборки (подборка может не содержать событий)");
@@ -57,14 +57,12 @@ public class CompilationServiceImpl implements CompilationService {
         return compilationMapper.toDto(compilation);
     }
 
-    @Transactional
     @Override
     public void deleteCompilationAdmin(Long compId) {
         log.info("Удаление подборки с id - {}", compId);
         compilationRepository.deleteById(compId);
     }
 
-    @Transactional
     @Override
     public CompilationDto updateCompilationAdmin(Long compId, UpdateCompilationRequest dto) {
         log.info("Обновление подборки с id - {}", compId);

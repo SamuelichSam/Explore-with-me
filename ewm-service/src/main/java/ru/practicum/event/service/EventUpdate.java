@@ -15,7 +15,7 @@ import java.time.format.DateTimeFormatter;
 public class EventUpdate {
     private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
-    public void updateEventRequest(Event event, UpdateEventRequest updateRequest, LocationRepository locationRepo) {
+    public void updateEventRequest(Event event, UpdateEventRequest updateRequest) {
         if (updateRequest.annotation() != null) {
             event.setAnnotation(updateRequest.annotation());
         }
@@ -46,19 +46,20 @@ public class EventUpdate {
         if (updateRequest.title() != null) {
             event.setTitle(updateRequest.title());
         }
+    }
 
-        if (updateRequest instanceof UpdateEventAdminRequest adminRequest) {
-            if (adminRequest.location() != null) {
-                Location location = adminRequest.location();
-                if (location.getId() == null) {
-                    location = locationRepo.save(location);
-                } else {
-                    Location finalLocation = location;
-                    location = locationRepo.findById(location.getId())
-                            .orElseGet(() -> locationRepo.save(finalLocation));
-                }
-                event.setLocation(location);
+    public void updateEventRequestAdmin(Event event, UpdateEventAdminRequest adminRequest, LocationRepository locationRepo) {
+        updateEventRequest(event, adminRequest);
+        if (adminRequest.location() != null) {
+            Location location = adminRequest.location();
+            if (location.getId() == null) {
+                location = locationRepo.save(location);
+            } else {
+                Location finalLocation = location;
+                location = locationRepo.findById(location.getId())
+                        .orElseGet(() -> locationRepo.save(finalLocation));
             }
+            event.setLocation(location);
         }
     }
 }
