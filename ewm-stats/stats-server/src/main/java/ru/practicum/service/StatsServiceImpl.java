@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.HitDto;
 import ru.practicum.StatDto;
+import ru.practicum.exception.ValidationException;
 import ru.practicum.mapper.StatMapper;
 import ru.practicum.projection.StatProjection;
 import ru.practicum.repo.StatRepository;
@@ -28,6 +29,9 @@ public class StatsServiceImpl implements StatsService {
 
     @Override
     public List<StatDto> findStats(LocalDateTime start, LocalDateTime end, List<String> uris, Boolean unique) {
+        if (start.isAfter(end)) {
+            throw new ValidationException("Дата начала не может быть позже даты окончания");
+        }
         List<StatProjection> projections;
         if (uris == null || uris.isEmpty()) {
             if (unique) {
