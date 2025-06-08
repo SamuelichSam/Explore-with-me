@@ -21,11 +21,13 @@ public record NewEventDto(
         Boolean requestModeration,
         @NotBlank
         @Size(min = 3, max = 120)
-        String title
+        String title,
+        Integer rating
 ) {
     public NewEventDto {
         paid = paid != null ? paid : false;
         participantLimit = participantLimit != null ? participantLimit : 0;
         requestModeration = requestModeration != null ? requestModeration : true;
+        rating = rating != null ? rating : 5;
     }
 }

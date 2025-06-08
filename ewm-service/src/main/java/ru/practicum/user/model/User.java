@@ -20,4 +20,6 @@ public class User {
     String email;
     @Column(nullable = false)
     String name;
+    @Column(nullable = false)
+    Integer rating;
 }

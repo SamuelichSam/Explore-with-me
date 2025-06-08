@@ -19,4 +19,6 @@ public interface EventServicePrivate {
     EventRequestStatusUpdateResult updateEventRequestsPrivate(Long userId,
                                                               Long eventId,
                                                               EventRequestStatusUpdateRequest dto);
+
+    EventFullDto findEventRatingPrivate(Long userId, Long eventId);
 }

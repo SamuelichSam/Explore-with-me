@@ -4,10 +4,9 @@ import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.*;
-import ru.practicum.event.dto.EventFullDto;
-import ru.practicum.event.dto.EventPublicRequestParams;
-import ru.practicum.event.dto.EventShortDto;
+import ru.practicum.event.dto.*;
 import ru.practicum.event.service.EventServicePublic;
+import ru.practicum.user.dto.UserShortDto;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -43,5 +42,15 @@ public class EventPublicController {
         String clientIp = request.getRemoteAddr();
         String endpoint = request.getRequestURI();
         return eventService.findEventByIdPublic(eventId, clientIp, endpoint);
+    }
+
+    @GetMapping("/top")
+    public List<EventShortDto> findTopEventsPublic(@RequestParam(defaultValue = "10") Integer count) {
+        return eventService.findTopEventsPublic(count);
+    }
+
+    @GetMapping("/top/authors")
+    public List<UserShortDto> findTopAuthorsPublic(@RequestParam(defaultValue = "10") Integer count) {
+        return eventService.findTopAuthorsPublic(count);
     }
 }

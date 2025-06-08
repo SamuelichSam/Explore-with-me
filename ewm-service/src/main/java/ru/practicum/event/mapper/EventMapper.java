@@ -21,5 +21,6 @@ public interface EventMapper {
     @Mapping(target = "category", source = "category")
     @Mapping(target = "initiator", source = "initiator")
     @Mapping(target = "eventDate", source = "dto.eventDate", dateFormat = "yyyy-MM-dd HH:mm:ss")
+    @Mapping(target = "rating", source = "dto.rating")
     Event toEvent(NewEventDto dto, User initiator, Category category);
 }

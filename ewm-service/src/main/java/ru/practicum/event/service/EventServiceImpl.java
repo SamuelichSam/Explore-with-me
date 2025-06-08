@@ -22,11 +22,14 @@ import ru.practicum.event.repo.EventRepository;
 import ru.practicum.event.repo.LocationRepository;
 import ru.practicum.exception.ConflictException;
 import ru.practicum.exception.NotFoundException;
+import ru.practicum.rating.repo.RatingRepository;
 import ru.practicum.request.dto.ParticipationRequestDto;
 import ru.practicum.request.mapper.RequestMapper;
 import ru.practicum.request.model.Request;
 import ru.practicum.request.model.Status;
 import ru.practicum.request.repo.RequestRepository;
+import ru.practicum.user.dto.UserShortDto;
+import ru.practicum.user.mapper.UserMapper;
 import ru.practicum.user.model.User;
 import ru.practicum.user.repo.UserRepository;
 
@@ -45,8 +48,10 @@ public class EventServiceImpl implements EventServiceAdmin, EventServicePrivate,
     private final CategoryRepository categoryRepository;
     private final LocationRepository locationRepository;
     private final RequestRepository requestRepository;
+    private final RatingRepository ratingRepository;
     private final EventMapper eventMapper;
     private final RequestMapper requestMapper;
+    private final UserMapper userMapper;
     private final StatsClient statsClient;
 
     @Override
@@ -109,7 +114,6 @@ public class EventServiceImpl implements EventServiceAdmin, EventServicePrivate,
                 default -> throw new IllegalArgumentException("Неизвестное действие " + dto.stateAction());
             }
         }
-
         return eventMapper.toFullDto(event);
     }
 
@@ -158,6 +162,26 @@ public class EventServiceImpl implements EventServiceAdmin, EventServicePrivate,
         requestRepository.saveAll(requests);
         eventRepository.save(event);
         return new EventRequestStatusUpdateResult(confirmed, rejected);
+    }
+
+    @Override
+    public EventFullDto findEventRatingPrivate(Long userId, Long eventId) {
+        log.info("Получение рейтинга события с id - {} пользователя с id - {}", eventId, userId);
+        userRepository.findById(userId)
+                .orElseThrow(() -> new NotFoundException("Пользователь с id " + userId + " не найден"));
+        Event event = eventRepository.findById(eventId)
+                .orElseThrow(() -> new NotFoundException("Событие с id " + eventId + " не найдено"));
+        Long likes = ratingRepository.countByEventIdAndLiked(eventId, true);
+        Long dislikes = ratingRepository.countByEventIdAndLiked(eventId, false);
+        int rating;
+        Long score = likes - dislikes;
+        if (likes + dislikes == 0) {
+            rating = 5;
+        } else {
+            rating = (int) Math.min(10, Math.max(1, 5 + score / 2));
+        }
+        event.setRating(rating);
+        return eventMapper.toFullDto(event);
     }
 
     @Override
@@ -216,12 +240,18 @@ public class EventServiceImpl implements EventServiceAdmin, EventServicePrivate,
         EventSort eventSort = params.sort() != null ? EventSort.valueOf(params.sort().toUpperCase()) : null;
         Sort sorting = Sort.unsorted();
         if (eventSort != null) {
-            if (eventSort == EventSort.EVENT_DATE) {
-                sorting = Sort.by(Sort.Direction.DESC, "eventDate");
-            } else if (eventSort == EventSort.VIEWS) {
-                sorting = Sort.by(Sort.Direction.DESC, "views");
+            switch (eventSort) {
+                case EVENT_DATE:
+                    sorting = Sort.by(Sort.Direction.DESC, "eventDate");
+                    break;
+                case VIEWS:
+                    sorting = Sort.by(Sort.Direction.DESC, "views");
+                    break;
+                case RATING:
+                    sorting = Sort.by(Sort.Direction.DESC, "rating");
+                    break;
+                }
             }
-        }
         Pageable pageable = PageRequest.of(params.from() / params.size(), params.size(), sorting);
         List<Event> events = eventRepository.findAll(spec, pageable).getContent();
         logHit(clientIp, endpoint);
@@ -242,6 +272,24 @@ public class EventServiceImpl implements EventServiceAdmin, EventServicePrivate,
         Long views = stats.isEmpty() ? 0L : stats.getFirst().hits();
         event.setViews(views);
         return eventMapper.toFullDto(event);
+    }
+
+    @Override
+    public List<EventShortDto> findTopEventsPublic(Integer count) {
+        log.info("Получение топ {} событий по рейтингу", count);
+        List<Event> events = eventRepository.findTopEvents(count);
+        return events.stream()
+                .map(eventMapper::toShortDto)
+                .toList();
+    }
+
+    @Override
+    public List<UserShortDto> findTopAuthorsPublic(Integer count) {
+        log.info("Получение топ {} авторов по рейтингу", count);
+        List<User> users = userRepository.findTopUsers(count);
+        return users.stream()
+                .map(userMapper::toShortDto)
+                .toList();
     }
 
     private void logHit(String clientIp, String endpoint) {

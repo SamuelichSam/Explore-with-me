@@ -12,6 +12,10 @@ public record UserDto(
         String email,
         @NotBlank
         @Size(min = 2, max = 250)
-        String name
+        String name,
+        Integer rating
 ) {
+        public UserDto {
+                rating = rating != null ? rating : 5;
+        }
 }
