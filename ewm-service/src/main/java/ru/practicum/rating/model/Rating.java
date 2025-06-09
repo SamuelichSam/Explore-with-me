@@ -26,6 +26,7 @@ public class Rating {
     @ManyToOne
     @JoinColumn(name = "user_id")
     User user;
-    Boolean liked;
+    @Enumerated(EnumType.STRING)
+    RatingType ratingType;
     LocalDateTime created;
 }

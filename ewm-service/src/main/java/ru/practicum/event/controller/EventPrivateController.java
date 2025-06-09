@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.*;
 import ru.practicum.event.dto.*;
 import ru.practicum.event.service.EventServicePrivate;
 import ru.practicum.rating.dto.RatingDto;
+import ru.practicum.rating.model.RatingType;
 import ru.practicum.rating.service.RatingService;
 import ru.practicum.request.dto.ParticipationRequestDto;
 
@@ -60,16 +61,16 @@ public class EventPrivateController {
     @ResponseStatus(HttpStatus.CREATED)
     public RatingDto rateEventPrivate(@PathVariable Long userId,
                                       @PathVariable Long eventId,
-                                      @RequestParam Boolean liked) {
-        return ratingService.rateEventPrivate(userId, eventId, liked);
+                                      @RequestParam RatingType ratingType) {
+        return ratingService.rateEventPrivate(userId, eventId, ratingType);
     }
 
     @PatchMapping("{eventId}/ratings/{ratingId}")
     public RatingDto updateRatePrivate(@PathVariable Long userId,
                                        @PathVariable Long eventId,
                                        @PathVariable Long ratingId,
-                                       @RequestParam Boolean liked) {
-        return ratingService.updateRatePrivate(userId, eventId, ratingId, liked);
+                                       @RequestParam RatingType ratingType) {
+        return ratingService.updateRatePrivate(userId, eventId, ratingId, ratingType);
     }
 
     @GetMapping("{eventId}/ratings")

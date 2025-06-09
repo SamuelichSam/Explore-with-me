@@ -31,7 +31,7 @@ public class CategoryServiceImpl implements CategoryService {
     public CategoryDto createCategoryAdmin(NewCategoryDto dto) {
         log.info("Добавление новой категории");
         if (categoryRepository.existsByName(dto.name())) {
-            throw new ConflictException("Категория с именем " + dto.name() + " уже существует");
+            throw new ConflictException("Категория с именем %s уже существует ".formatted(dto.name()));
         }
         Category category = categoryRepository.save(categoryMapper.toCategory(dto));
         return categoryMapper.toDto(category);
@@ -41,9 +41,9 @@ public class CategoryServiceImpl implements CategoryService {
     public void deleteCategoryAdmin(Long categoryId) {
         log.info("Удаление категории с id - {}", categoryId);
         Category category = categoryRepository.findById(categoryId)
-                .orElseThrow(() -> new NotFoundException("Категория с id " + categoryId + " не найдена"));
+                .orElseThrow(() -> new NotFoundException("Категория с id %s не найдена ".formatted(categoryId)));
         if (eventRepository.existsByCategoryId(categoryId)) {
-            throw new ConflictException("Существуют события, связанные с категорией с id " + categoryId);
+            throw new ConflictException("Существуют события, связанные с категорией с id %s ".formatted(categoryId));
         }
         categoryRepository.delete(category);
     }
@@ -52,10 +52,10 @@ public class CategoryServiceImpl implements CategoryService {
     public CategoryDto updateCategoryAdmin(CategoryDto dto) {
         log.info("Обновление категории с id - {}", dto.id());
         Category category = categoryRepository.findById(dto.id())
-                .orElseThrow(() -> new NotFoundException("Категория с id " + dto.id() + " не найдена"));
+                .orElseThrow(() -> new NotFoundException("Категория с id %s не найдена ".formatted(dto.id())));
         if (dto.name() != null && !dto.name().equals(category.getName())) {
             if (categoryRepository.existsByName(dto.name())) {
-                throw new ConflictException("Категория с именем " + dto.name() + " уже существует");
+                throw new ConflictException("Категория с именем %s уже существует ".formatted(dto.name()));
             }
             category.setName(dto.name());
         }
@@ -76,7 +76,7 @@ public class CategoryServiceImpl implements CategoryService {
     public CategoryDto findCategoryByIdPublic(Long categoryId) {
         log.info("Получение информации о категории с id - {}", categoryId);
         Category category = categoryRepository.findById(categoryId)
-                .orElseThrow(() -> new NotFoundException("Категория с id " + categoryId + " не найдена"));
+                .orElseThrow(() -> new NotFoundException("Категория с id %s не найдена ".formatted(categoryId)));
         return categoryMapper.toDto(category);
     }
 }

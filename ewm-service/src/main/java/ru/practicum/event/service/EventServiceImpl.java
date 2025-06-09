@@ -22,6 +22,7 @@ import ru.practicum.event.repo.EventRepository;
 import ru.practicum.event.repo.LocationRepository;
 import ru.practicum.exception.ConflictException;
 import ru.practicum.exception.NotFoundException;
+import ru.practicum.rating.model.RatingType;
 import ru.practicum.rating.repo.RatingRepository;
 import ru.practicum.request.dto.ParticipationRequestDto;
 import ru.practicum.request.mapper.RequestMapper;
@@ -58,7 +59,7 @@ public class EventServiceImpl implements EventServiceAdmin, EventServicePrivate,
     public List<EventShortDto> findEventsPrivate(Long userId, Integer from, Integer size) {
         log.info("Получение событий, добавленных пользователем с id - {}", userId);
         userRepository.findById(userId)
-                .orElseThrow(() -> new NotFoundException("Пользователь с id " + userId + " не найден"));
+                .orElseThrow(() -> new NotFoundException("Пользователь с id %s не найден".formatted(userId)));
         Pageable pageable = PageRequest.of(from / size, size);
         List<Event> events = eventRepository.findAllByInitiatorId(userId, pageable).getContent();
         return events.stream()
@@ -72,9 +73,9 @@ public class EventServiceImpl implements EventServiceAdmin, EventServicePrivate,
         EventCheck.dateCheck(LocalDateTime.parse(dto.eventDate(),
                 DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
         User requester = userRepository.findById(userId)
-                .orElseThrow(() -> new NotFoundException("Пользователь с id " + userId + " не найден"));
+                .orElseThrow(() -> new NotFoundException("Пользователь с id %s не найден".formatted(userId)));
         Category category = categoryRepository.findById(dto.category())
-                .orElseThrow(() -> new NotFoundException("Категория с id " + dto.category() + " не найдена"));
+                .orElseThrow(() -> new NotFoundException("Категория с id %s не найдена".formatted(dto.category())));
         locationRepository.save(dto.location());
         Event event = eventMapper.toEvent(dto, requester, category);
         event.setCreatedOn(LocalDateTime.now());
@@ -89,8 +90,7 @@ public class EventServiceImpl implements EventServiceAdmin, EventServicePrivate,
         log.info("Получение полной информации о событии с id - {} добавленном пользователем с id - {}",
                 eventId, userId);
         Event event = eventRepository.findByIdAndInitiatorId(eventId, userId)
-                .orElseThrow(() -> new NotFoundException("Событие с id " + eventId +
-                        " не найдено для пользователя с id " + userId));
+                .orElseThrow(() -> new NotFoundException("Событие с id %s не найдено".formatted(eventId)));
         return eventMapper.toFullDto(event);
     }
 
@@ -98,20 +98,20 @@ public class EventServiceImpl implements EventServiceAdmin, EventServicePrivate,
     public EventFullDto updateEventPrivate(Long userId, Long eventId, UpdateEventUserRequest dto) {
         log.info("Обновление события с id - {} добавленного пользователем с id - {}", eventId, userId);
         Event event = eventRepository.findById(eventId)
-                .orElseThrow(() -> new NotFoundException("Событие с id " + eventId + " не найдено"));
+                .orElseThrow(() -> new NotFoundException("Событие с id %s не найдено".formatted(eventId)));
         EventCheck.stateValidation(event.getState());
         EventCheck.dateCheck(event.getEventDate());
         EventUpdate.updateEventRequest(event, dto);
         if (dto.category() != null) {
             Category category = categoryRepository.findById(dto.category())
-                    .orElseThrow(() -> new NotFoundException("Категория с id " + dto.category() + " не найдена"));
+                    .orElseThrow(() -> new NotFoundException("Категория с id %s не найдена".formatted(dto.category())));
             event.setCategory(category);
         }
         if (dto.stateAction() != null) {
             switch (dto.stateAction()) {
                 case SEND_TO_REVIEW -> event.setState(State.PENDING);
                 case CANCEL_REVIEW -> event.setState(State.CANCELED);
-                default -> throw new IllegalArgumentException("Неизвестное действие " + dto.stateAction());
+                default -> throw new IllegalArgumentException("Неизвестное действие %s ".formatted(dto.stateAction()));
             }
         }
         return eventMapper.toFullDto(event);
@@ -122,9 +122,9 @@ public class EventServiceImpl implements EventServiceAdmin, EventServicePrivate,
         log.info("Получение информации о запросах на участие в событии с id - {} пользователя с id - {}",
                 eventId, userId);
         userRepository.findById(userId)
-                .orElseThrow(() -> new NotFoundException("Пользователь с id " + userId + " не найден"));
+                .orElseThrow(() -> new NotFoundException("Пользователь с id %s не найден".formatted(userId)));
         eventRepository.findById(eventId)
-                .orElseThrow(() -> new NotFoundException("Событие с id " + eventId + " не найдено"));
+                .orElseThrow(() -> new NotFoundException("Событие с id %s не найдено".formatted(eventId)));
         List<Request> requests = requestRepository.findAllByEventId(eventId);
         return requests.stream()
                 .map(requestMapper::toDto)
@@ -136,7 +136,7 @@ public class EventServiceImpl implements EventServiceAdmin, EventServicePrivate,
                                                                      EventRequestStatusUpdateRequest dto) {
         log.info("Обновление статуса заявок на участие в событии с id - {} пользователя с id - {}", eventId, userId);
         Event event = eventRepository.findById(eventId)
-                .orElseThrow(() -> new NotFoundException("Событие с id " + eventId + " не найдено"));
+                .orElseThrow(() -> new NotFoundException("Событие с id %s не найдено".formatted(eventId)));
         Status status = Status.valueOf(dto.status().toUpperCase());
         if (event.getParticipantLimit() != 0 && event.getRequestModeration()) {
             EventCheck.requestLimitCheck(event.getParticipantLimit(), event.getConfirmedRequests(), status);
@@ -168,11 +168,11 @@ public class EventServiceImpl implements EventServiceAdmin, EventServicePrivate,
     public EventFullDto findEventRatingPrivate(Long userId, Long eventId) {
         log.info("Получение рейтинга события с id - {} пользователя с id - {}", eventId, userId);
         userRepository.findById(userId)
-                .orElseThrow(() -> new NotFoundException("Пользователь с id " + userId + " не найден"));
+                .orElseThrow(() -> new NotFoundException("Пользователь с id %s не найден".formatted(userId)));
         Event event = eventRepository.findById(eventId)
-                .orElseThrow(() -> new NotFoundException("Событие с id " + eventId + " не найдено"));
-        Long likes = ratingRepository.countByEventIdAndLiked(eventId, true);
-        Long dislikes = ratingRepository.countByEventIdAndLiked(eventId, false);
+                .orElseThrow(() -> new NotFoundException("Событие с id %s не найдено".formatted(eventId)));
+        Long likes = ratingRepository.countByEventIdAndRatingType(eventId, RatingType.LIKE);
+        Long dislikes = ratingRepository.countByEventIdAndRatingType(eventId, RatingType.DISLIKE);
         int rating;
         Long score = likes - dislikes;
         if (likes + dislikes == 0) {
@@ -200,8 +200,7 @@ public class EventServiceImpl implements EventServiceAdmin, EventServicePrivate,
     public EventFullDto updateEventAdmin(Long eventId, UpdateEventAdminRequest dto) {
         log.info("Обновление события с id - {} и его статуса", eventId);
         Event event = eventRepository.findById(eventId)
-                .orElseThrow(() -> new NotFoundException("Событие с id " + eventId +
-                        " не найдено"));
+                .orElseThrow(() -> new NotFoundException("Событие с id %s не найдено".formatted(eventId)));
         EventCheck.dateAfterCheck(event.getState(), event.getEventDate(),
                 event.getPublishedOn());
         if (dto.stateAction() != null) {
@@ -224,7 +223,7 @@ public class EventServiceImpl implements EventServiceAdmin, EventServicePrivate,
         EventUpdate.updateEventRequestAdmin(event, dto, locationRepository);
         if (dto.category() != null) {
             Category category = categoryRepository.findById(dto.category())
-                    .orElseThrow(() -> new NotFoundException("Категория с id " + dto.category() + " не найдена"));
+                    .orElseThrow(() -> new NotFoundException("Категория с id %s не найдена".formatted(dto.category())));
             event.setCategory(category);
         }
         Event updatedEvent = eventRepository.save(event);
@@ -240,17 +239,7 @@ public class EventServiceImpl implements EventServiceAdmin, EventServicePrivate,
         EventSort eventSort = params.sort() != null ? EventSort.valueOf(params.sort().toUpperCase()) : null;
         Sort sorting = Sort.unsorted();
         if (eventSort != null) {
-            switch (eventSort) {
-                case EVENT_DATE:
-                    sorting = Sort.by(Sort.Direction.DESC, "eventDate");
-                    break;
-                case VIEWS:
-                    sorting = Sort.by(Sort.Direction.DESC, "views");
-                    break;
-                case RATING:
-                    sorting = Sort.by(Sort.Direction.DESC, "rating");
-                    break;
-                }
+            sorting = eventSort.getSort();
             }
         Pageable pageable = PageRequest.of(params.from() / params.size(), params.size(), sorting);
         List<Event> events = eventRepository.findAll(spec, pageable).getContent();
@@ -264,8 +253,7 @@ public class EventServiceImpl implements EventServiceAdmin, EventServicePrivate,
     public EventFullDto findEventByIdPublic(Long eventId, String clientIp, String endpoint) {
         log.info("Получение подробной информации об опубликованном событии с id - {}", eventId);
         Event event = eventRepository.findByIdAndState(eventId, State.PUBLISHED)
-                .orElseThrow(() -> new NotFoundException("Событие с id " + eventId +
-                        " не найдено"));
+                .orElseThrow(() -> new NotFoundException("Событие с id %s не найдено".formatted(eventId)));
         logHit(clientIp, endpoint);
         List<StatDto> stats = statsClient.findStats(event.getPublishedOn(), LocalDateTime.now(),
                 List.of("/events/" + eventId), true);

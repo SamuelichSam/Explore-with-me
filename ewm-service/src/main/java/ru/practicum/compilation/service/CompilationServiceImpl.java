@@ -43,7 +43,7 @@ public class CompilationServiceImpl implements CompilationService {
     public CompilationDto findCompilationById(Long compId) {
         log.info("Получение подборки событий с id - {}", compId);
         Compilation compilation = compilationRepository.findById(compId)
-                .orElseThrow(() -> new NotFoundException("Подборка с id " + compId + " не найдена"));
+                .orElseThrow(() -> new NotFoundException("Подборка с id %s не найдена".formatted(compId)));
         return compilationMapper.toDto(compilation);
     }
 
@@ -67,7 +67,7 @@ public class CompilationServiceImpl implements CompilationService {
     public CompilationDto updateCompilationAdmin(Long compId, UpdateCompilationRequest dto) {
         log.info("Обновление подборки с id - {}", compId);
         Compilation compilation = compilationRepository.findById(compId)
-                .orElseThrow(() -> new NotFoundException("Подборка с id " + compId + " не найдена"));
+                .orElseThrow(() -> new NotFoundException("Подборка с id %s не найдена".formatted(compId)));
         if (dto.events() != null) {
             List<Event> events = eventRepository.findAllById(dto.events());
             compilation.setEvents(events);
