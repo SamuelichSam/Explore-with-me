@@ -74,9 +74,9 @@
 									"    pm.response.to.be.json;",
 									"});",
 									"",
-									"pm.test(\"Поле liked должно быть true\", function() {",
+									"pm.test(\"Поле ratingtype должно быть равно 'LIKE'\", function() {",
 									"    const responseData = pm.response.json();",
-									"    pm.expect(responseData.liked).to.be.true;",
+									"    pm.expect(responseData.ratingType).to.eql('LIKE');",
 									"});"
 								],
 								"type": "text/javascript",
@@ -99,7 +99,7 @@
 							}
 						],
 						"url": {
-							"raw": "{{baseUrl}}/users/:userId/events/:eventId/ratings?liked=true",
+							"raw": "{{baseUrl}}/users/:userId/events/:eventId/ratings?ratingType=LIKE",
 							"host": [
 								"{{baseUrl}}"
 							],
@@ -112,8 +112,8 @@
 							],
 							"query": [
 								{
-									"key": "liked",
-									"value": "true"
+									"key": "ratingType",
+									"value": "LIKE"
 								}
 							],
 							"variable": [
@@ -195,9 +195,9 @@
 									"    pm.response.to.be.json;",
 									"});",
 									"",
-									"pm.test(\"Поле liked должно быть false\", function() {",
+									"pm.test(\"Поле ratingtype должно быть равно 'DISLIKE'\", function() {",
 									"    const responseData = pm.response.json();",
-									"    pm.expect(responseData.liked).to.be.false;",
+									"    pm.expect(responseData.ratingType).to.eql('DISLIKE');",
 									"});"
 								],
 								"type": "text/javascript",
@@ -220,7 +220,7 @@
 							}
 						],
 						"url": {
-							"raw": "{{baseUrl}}/users/:userId/events/:eventId/ratings?liked=false",
+							"raw": "{{baseUrl}}/users/:userId/events/:eventId/ratings?ratingType=DISLIKE",
 							"host": [
 								"{{baseUrl}}"
 							],
@@ -233,8 +233,8 @@
 							],
 							"query": [
 								{
-									"key": "liked",
-									"value": "false"
+									"key": "ratingType",
+									"value": "DISLIKE"
 								}
 							],
 							"variable": [
@@ -318,9 +318,9 @@
 									"    pm.response.to.be.json;",
 									"});",
 									"",
-									"pm.test(\"Поле liked должно быть false\", function() {",
+									"pm.test(\"Поле ratingtype должно быть равно 'DISLIKE'\", function() {",
 									"    const responseData = pm.response.json();",
-									"    pm.expect(responseData.liked).to.be.false;",
+									"    pm.expect(responseData.ratingType).to.eql('DISLIKE');",
 									"});"
 								],
 								"type": "text/javascript",
@@ -343,7 +343,7 @@
 							}
 						],
 						"url": {
-							"raw": "{{baseUrl}}/users/:userId/events/:eventId/ratings/:ratingId?liked=false",
+							"raw": "{{baseUrl}}/users/:userId/events/:eventId/ratings/:ratingId?ratingType=DISLIKE",
 							"host": [
 								"{{baseUrl}}"
 							],
@@ -357,8 +357,8 @@
 							],
 							"query": [
 								{
-									"key": "liked",
-									"value": "false"
+									"key": "ratingType",
+									"value": "DISLIKE"
 								}
 							],
 							"variable": [
@@ -1188,7 +1188,7 @@
 							}
 						],
 						"url": {
-							"raw": "{{baseUrl}}/users/:userId/events/:eventId/ratings?liked=true",
+							"raw": "{{baseUrl}}/users/:userId/events/:eventId/ratings?ratingType=LIKE",
 							"host": [
 								"{{baseUrl}}"
 							],
@@ -1201,8 +1201,8 @@
 							],
 							"query": [
 								{
-									"key": "liked",
-									"value": "true"
+									"key": "ratingType",
+									"value": "LIKE"
 								}
 							],
 							"variable": [
@@ -1304,7 +1304,7 @@
 							}
 						],
 						"url": {
-							"raw": "{{baseUrl}}/users/:userId/events/:eventId/ratings?liked=true",
+							"raw": "{{baseUrl}}/users/:userId/events/:eventId/ratings?ratingType=LIKE",
 							"host": [
 								"{{baseUrl}}"
 							],
@@ -1317,8 +1317,8 @@
 							],
 							"query": [
 								{
-									"key": "liked",
-									"value": "true"
+									"key": "ratingType",
+									"value": "LIKE"
 								}
 							],
 							"variable": [
@@ -1422,7 +1422,7 @@
 							}
 						],
 						"url": {
-							"raw": "{{baseUrl}}/users/:userId/events/:eventId/ratings?liked=true",
+							"raw": "{{baseUrl}}/users/:userId/events/:eventId/ratings?ratingType=LIKE",
 							"host": [
 								"{{baseUrl}}"
 							],
@@ -1435,8 +1435,8 @@
 							],
 							"query": [
 								{
-									"key": "liked",
-									"value": "true"
+									"key": "ratingType",
+									"value": "LIKE"
 								}
 							],
 							"variable": [
@@ -1542,7 +1542,7 @@
 							}
 						],
 						"url": {
-							"raw": "{{baseUrl}}/users/:userId/events/:eventId/ratings/:ratingId?liked=false",
+							"raw": "{{baseUrl}}/users/:userId/events/:eventId/ratings/:ratingId?ratingType=DISLIKE",
 							"host": [
 								"{{baseUrl}}"
 							],
@@ -1556,8 +1556,8 @@
 							],
 							"query": [
 								{
-									"key": "liked",
-									"value": "false"
+									"key": "ratingType",
+									"value": "DISLIKE"
 								}
 							],
 							"variable": [
@@ -1717,12 +1717,12 @@
 					"        return this.post(\"/admin/users\", user, \"Ошибка при добавлении нового пользователя: \", verbose);",
 					"    }",
 					"",
-					"    async addLike(userId, eventId, liked = true, verbose=null) {",
-					"        return this.post('/users/' + userId + '/events/' + eventId + '/ratings?liked=' + liked, null, \"Ошибка при добавлении лайка: \", verbose);",
+					"    async addLike(userId, eventId, ratingType = \"LIKE\", verbose=null) {",
+					"        return this.post('/users/' + userId + '/events/' + eventId + '/ratings?ratingType=' + ratingType, null, \"Ошибка при добавлении лайка: \", verbose);",
 					"    }",
 					"",
-					"    async addDislike(userId, eventId, liked = false, verbose=null) {",
-					"        return this.post('/users/' + userId + '/events/' + eventId + '/ratings?liked=' + liked, null, \"Ошибка при добавлении лайка: \", verbose);",
+					"    async addDislike(userId, eventId, ratingType = \"DISLIKE\", verbose=null) {",
+					"        return this.post('/users/' + userId + '/events/' + eventId + '/ratings?ratingType=' + ratingType, null, \"Ошибка при добавлении лайка: \", verbose);",
 					"    }",
 					"",
 					"    async addCategory(category, verbose=null) {",
