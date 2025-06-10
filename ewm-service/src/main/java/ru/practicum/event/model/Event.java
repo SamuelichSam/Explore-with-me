@@ -42,4 +42,5 @@ public class Event {
     State state;
     String title;
     Long views;
+    Integer rating;
 }

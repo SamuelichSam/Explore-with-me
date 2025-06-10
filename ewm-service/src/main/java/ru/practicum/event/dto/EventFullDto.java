@@ -27,6 +27,7 @@ public record EventFullDto(
         Boolean requestModeration,
         State state,
         String title,
-        Long views
+        Long views,
+        Integer rating
         ) {
 }
